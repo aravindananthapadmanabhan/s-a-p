@@ -6,6 +6,10 @@ on:
   pull_request:
     branches: [ master ]
 
+# Allow the workflow's GITHUB_TOKEN to create releases and upload assets
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
