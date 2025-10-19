@@ -11,16 +11,18 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-
-        // If a crash log exists from a previous run, show it so we can debug.
-        try {
-            val f = File(filesDir, "crash.log")
-            if (f.exists()) {
-                val text = f.readText()
-                showCrashDialog(text)
-                f.delete()
-            }
-        } catch (_: Exception) {
+        // Wire buttons to open the respective screens
+        findViewById<android.widget.Button>(R.id.btnUpdate).setOnClickListener {
+            startActivity(android.content.Intent(this, UpdateActivity::class.java))
+        }
+        findViewById<android.widget.Button>(R.id.btnAudit).setOnClickListener {
+            startActivity(android.content.Intent(this, AuditActivity::class.java))
+        }
+        findViewById<android.widget.Button>(R.id.btnSearch).setOnClickListener {
+            startActivity(android.content.Intent(this, SearchActivity::class.java))
+        }
+        findViewById<android.widget.Button>(R.id.btnProperties).setOnClickListener {
+            startActivity(android.content.Intent(this, PropertiesActivity::class.java))
         }
     }
 

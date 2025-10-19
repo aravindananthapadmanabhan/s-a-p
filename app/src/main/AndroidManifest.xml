@@ -13,6 +13,10 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity android:name=".UpdateActivity" android:exported="true" />
+        <activity android:name=".AuditActivity" android:exported="true" />
+        <activity android:name=".SearchActivity" android:exported="true" />
+        <activity android:name=".PropertiesActivity" android:exported="true" />
     </application>
 
 </manifest>
