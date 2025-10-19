@@ -1,0 +1,43 @@
+# Gradle
+.gradle/
+build/
+**/build/
+/.gradle
+
+# Gradle Wrapper
+/.gradle/
+gradle-wrapper.jar
+
+# Local configuration
+local.properties
+
+# Android
+/captures/
+/app/*.keystore
+*.apk
+*.ap_ 
+
+# Android Studio
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# IntelliJ
+.idea/
+*.iml
+
+# VS Code
+.vscode/
+
+# macOS
+.DS_Store
+
+# SDKs and tools installed in workspace
+/android-sdk/
+
+# Logs
+.log
+
+# Misc
+*.orig
