@@ -29,7 +29,7 @@ class MainActivity : AppCompatActivity() {
             setTextIsSelectable(true)
             setPadding(16, 16, 16, 16)
             textSize = 12f
-            text = text
+            setText(text)
         }
         val sv = ScrollView(this).apply { addView(tv) }
 
