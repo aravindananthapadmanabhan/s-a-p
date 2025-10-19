@@ -8,6 +8,8 @@ import java.io.StringWriter
 class CrashLoggerApplication : Application() {
     override fun onCreate() {
         super.onCreate()
+        // Save the previous handler so we can delegate to it later (avoid recursion)
+        val previousHandler = Thread.getDefaultUncaughtExceptionHandler()
 
         Thread.setDefaultUncaughtExceptionHandler { thread, throwable ->
             try {
@@ -19,9 +21,8 @@ class CrashLoggerApplication : Application() {
             } catch (_: Exception) {
                 // swallow
             }
-            // delegate to default handler to allow system to handle the crash
-            val default = Thread.getDefaultUncaughtExceptionHandler()
-            default?.uncaughtException(thread, throwable)
+            // delegate to previous handler to allow system to handle the crash
+            previousHandler?.uncaughtException(thread, throwable)
         }
     }
 }
