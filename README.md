@@ -43,6 +43,15 @@ Notes:
 - The Gradle wrapper JAR/binaries were intentionally not added. If you prefer, I can add the wrapper files so `./gradlew` works out-of-the-box.
 - If you'd like to develop fully in Codespaces without Android Studio, consider using the Android SDK and adb in the container or use remote preview tools.
 
+## Downloading the APK
+
+After CI runs successfully the debug APK will be available in two places:
+
+- Actions artifact: go to the repository page → Actions → select the run for "Android CI" → Artifacts → download `app-debug`.
+- Release asset: the workflow also creates a short-lived release per CI run and uploads `app-debug.apk` as an asset — go to the repository page → Releases and find the latest CI build release.
+
+Both provide the same debug APK which you can install on a device for testing. See above for installation instructions.
+
 
 Divided into 4 Major Activities
 1. Update
