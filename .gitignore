@@ -6,7 +6,6 @@ build/
 
 # Gradle Wrapper
 /.gradle/
-gradle-wrapper.jar
 
 # Local configuration
 local.properties
