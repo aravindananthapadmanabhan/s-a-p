@@ -54,3 +54,4 @@ class MainActivity : AppCompatActivity() {
         private const val TEXT_SIZE = 12f
     }
 }
+
