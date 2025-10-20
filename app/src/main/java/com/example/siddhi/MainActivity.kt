@@ -12,16 +12,16 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         // Wire buttons to open the respective screens
-        findViewById<android.widget.Button>(R.id.btnUpdate).setOnClickListener {
+        findViewById<android.widget.Button>(R.id.btn_update).setOnClickListener {
             startActivity(android.content.Intent(this, UpdateActivity::class.java))
         }
-        findViewById<android.widget.Button>(R.id.btnAudit).setOnClickListener {
+        findViewById<android.widget.Button>(R.id.btn_audit).setOnClickListener {
             startActivity(android.content.Intent(this, AuditActivity::class.java))
         }
-        findViewById<android.widget.Button>(R.id.btnSearch).setOnClickListener {
+        findViewById<android.widget.Button>(R.id.btn_search).setOnClickListener {
             startActivity(android.content.Intent(this, SearchActivity::class.java))
         }
-        findViewById<android.widget.Button>(R.id.btnProperties).setOnClickListener {
+        findViewById<android.widget.Button>(R.id.btn_properties).setOnClickListener {
             startActivity(android.content.Intent(this, PropertiesActivity::class.java))
         }
     }

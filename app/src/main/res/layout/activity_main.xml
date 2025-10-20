@@ -22,7 +22,7 @@
         app:layout_constraintGuide_percent="0.5" />
 
     <Button
-        android:id="@+id/btnUpdate"
+        android:id="@+id/btn_update"
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:text="Update"
@@ -34,7 +34,7 @@
         android:backgroundTint="?attr/colorPrimary" />
 
     <Button
-        android:id="@+id/btnAudit"
+        android:id="@+id/btn_audit"
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:text="Audit"
@@ -46,7 +46,7 @@
         android:backgroundTint="?attr/colorPrimaryVariant" />
 
     <Button
-        android:id="@+id/btnSearch"
+        android:id="@+id/btn_search"
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:text="Search"
@@ -58,7 +58,7 @@
         android:backgroundTint="?attr/colorSecondary" />
 
     <Button
-        android:id="@+id/btnProperties"
+        android:id="@+id/btn_properties"
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:text="Properties"
