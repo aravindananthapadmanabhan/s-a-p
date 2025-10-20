@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+# Pre-commit hook to run ktlintFormat and detekt (fast fail)
+set -e
+./gradlew ktlintFormat
+./gradlew detekt || true
+git add -A

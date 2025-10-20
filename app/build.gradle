@@ -1,10 +1,12 @@
 plugins {
     id 'com.android.application'
     id 'org.jetbrains.kotlin.android' version '1.9.10' apply false
+    id 'org.jlleitschuh.gradle.ktlint' version '11.4.2'
 }
 
 apply plugin: 'com.android.application'
 apply plugin: 'org.jetbrains.kotlin.android'
+apply plugin: 'io.gitlab.arturbosch.detekt'
 
 android {
     compileSdk 34
@@ -31,6 +33,26 @@ android {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
     }
+}
+
+// ktlint configuration
+ktlint {
+    verbose = true
+    android = true
+    outputToConsole = true
+    ignoreFailures = false
+}
+
+// detekt configuration
+detekt {
+    toolVersion = "1.22.0"
+    buildUponDefaultConfig = true
+    allRules = false
+}
+
+// Set detekt task JVM target separately (the DetektExtension doesn't have jvmTarget)
+tasks.withType(io.gitlab.arturbosch.detekt.Detekt).configureEach {
+    jvmTarget = "17"
 }
 
 dependencies {
