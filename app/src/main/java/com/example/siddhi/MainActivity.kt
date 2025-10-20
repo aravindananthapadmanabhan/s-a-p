@@ -5,11 +5,19 @@ import android.widget.ScrollView
 import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import java.io.File
 
 class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+        // If a previous crash log exists, show it and remove the file.
+        val crashFile = File(filesDir, "crash.log")
+        if (crashFile.exists()) {
+            val text = crashFile.readText()
+            showCrashDialog(text)
+            crashFile.delete()
+        }
         // Wire buttons to open the respective screens
         findViewById<android.widget.Button>(R.id.btn_update).setOnClickListener {
             startActivity(android.content.Intent(this, UpdateActivity::class.java))
@@ -28,8 +36,8 @@ class MainActivity : AppCompatActivity() {
     private fun showCrashDialog(text: String) {
         val tv = TextView(this).apply {
             setTextIsSelectable(true)
-            setPadding(16, 16, 16, 16)
-            textSize = 12f
+            setPadding(PADDING, PADDING, PADDING, PADDING)
+            textSize = TEXT_SIZE
             setText(text)
         }
         val sv = ScrollView(this).apply { addView(tv) }
@@ -41,3 +49,8 @@ class MainActivity : AppCompatActivity() {
             .show()
     }
 }
+
+    companion object {
+        private const val PADDING = 16
+        private const val TEXT_SIZE = 12f
+    }
