@@ -53,6 +53,24 @@ After CI runs successfully the debug APK will be available in two places:
 Both provide the same debug APK which you can install on a device for testing. See above for installation instructions.
 
 
+## Linting
+
+This repository includes ktlint and detekt configurations on the `chore/add-linters` branch. To run them locally:
+
+```bash
+./gradlew ktlintCheck
+./gradlew detekt
+```
+
+To auto-format Kotlin files with ktlint:
+
+```bash
+./gradlew ktlintFormat
+```
+
+These tools are provided on a separate branch and are not merged into `master` unless you decide to do so.
+
+
 Divided into 4 Major Activities
 1. Update
 1. Audit
