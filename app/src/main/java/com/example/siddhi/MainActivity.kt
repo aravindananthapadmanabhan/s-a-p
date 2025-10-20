@@ -49,10 +49,8 @@ class MainActivity : AppCompatActivity() {
             .show()
     }
 
-
     companion object {
         private const val PADDING = 16
         private const val TEXT_SIZE = 12f
     }
 }
-
