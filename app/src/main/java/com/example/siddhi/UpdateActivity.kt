@@ -1,16 +1,24 @@
 package com.example.siddhi
 
 import android.os.Bundle
+import android.util.Log
 import android.view.View
-import android.widget.*
+import android.widget.AdapterView
+import android.widget.ArrayAdapter
+import android.widget.Button
+import android.widget.EditText
+import android.widget.LinearLayout
+import android.widget.RadioButton
+import android.widget.RadioGroup
+import android.widget.Spinner
+import android.widget.Switch
+import android.widget.TextView
+import android.widget.Toast
 import androidx.activity.result.ActivityResultLauncher
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import com.journeyapps.barcodescanner.ScanContract
 import com.journeyapps.barcodescanner.ScanOptions
 import kotlin.random.Random
-import android.util.Log
 
 data class Resource(
     val id: String,
@@ -52,7 +60,9 @@ class UpdateActivity : AppCompatActivity() {
         val btnReset = findViewById<Button>(R.id.btn_reset)
 
         // Register ZXing scanner result handler (after views are available)
-        val barcodeLauncher: ActivityResultLauncher<ScanOptions> = registerForActivityResult(ScanContract()) { result ->
+        val barcodeLauncher: ActivityResultLauncher<ScanOptions> = registerForActivityResult(
+            ScanContract()
+        ) { result ->
             if (result.contents != null) {
                 val scanned = result.contents
                 etResourceId.setText(scanned)
@@ -88,7 +98,11 @@ class UpdateActivity : AppCompatActivity() {
             etName.setText(r.name)
             spinnerType.setSelection(types.indexOf(r.type).coerceAtLeast(0))
             switchIsBase.isChecked = r.isBaseContainer
-            if (r.resourceType == "virtual") rgResourceType.check(R.id.rb_virtual) else rgResourceType.check(R.id.rb_physical)
+            if (r.resourceType == "virtual") {
+                rgResourceType.check(R.id.rb_virtual)
+            } else {
+                rgResourceType.check(R.id.rb_physical)
+            }
             etLocation.setText(r.location)
             // select parent
             if (r.parentContainer.isNotEmpty()) {
@@ -138,7 +152,11 @@ class UpdateActivity : AppCompatActivity() {
                 isExistingResource = false
                 tvStatus.visibility = View.VISIBLE
                 tvStatus.text = "Creating new resource: $id"
-                Toast.makeText(this, "New resource - please fill in the details", Toast.LENGTH_SHORT).show()
+                Toast.makeText(
+                    this,
+                    "New resource - please fill in the details",
+                    Toast.LENGTH_SHORT
+                ).show()
             }
         }
 
@@ -151,24 +169,30 @@ class UpdateActivity : AppCompatActivity() {
                 options.setOrientationLocked(true)
                 options.captureActivity = com.journeyapps.barcodescanner.CaptureActivity::class.java
                 barcodeLauncher.launch(options)
-            } catch (e: Exception) {
+            } catch (e: ActivityNotFoundException) {
                 // If ZXing not available for some reason, fallback to simulated scan
                 btnScan.isEnabled = false
                 btnScan.text = "Scanning..."
                 btnScan.postDelayed({
-                    val mockBarcode = "RES" + Random.nextInt(0, 10000).toString().padStart(4, '0')
+                    Log.e("ScanError", "ZXing not available: ${e.message}")
+                    val mockBarcode = "RES" + Random.nextInt(0, MOCK_BARCODE_RANDOM_INT_LEVEL).toString().padStart(MOCK_BARCODE_PADDING, '0')
                     etResourceId.setText(mockBarcode)
                     btnScan.isEnabled = true
                     btnScan.text = "Scan"
                     Toast.makeText(this, "Barcode scanned: $mockBarcode", Toast.LENGTH_SHORT).show()
                     btnLookup.performClick()
-                }, 1400)
+                }, NO_BARCODE_DELAY)
             }
         }
 
         // Type selection shows/hides isBase and other fields
         spinnerType.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
-            override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
+            override fun onItemSelected(
+                parent: AdapterView<*>?,
+                view: View?,
+                position: Int,
+                id: Long
+            ) {
                 val selected = types.getOrNull(position) ?: ""
                 if (selected == "container") {
                     llIsBase.visibility = View.VISIBLE
@@ -189,8 +213,6 @@ class UpdateActivity : AppCompatActivity() {
                     spinnerParent.visibility = View.GONE
                 }
             }
-
-            override fun onNothingSelected(parent: AdapterView<*>?) {}
         }
 
         switchIsBase.setOnCheckedChangeListener { _, isChecked ->
@@ -210,7 +232,9 @@ class UpdateActivity : AppCompatActivity() {
             val id = etResourceId.text.toString().trim()
             val name = etName.text.toString().trim()
             val type = types.getOrNull(spinnerType.selectedItemPosition) ?: ""
-            val resourceType = if (rbVirtual.isChecked) "virtual" else if (rbPhysical.isChecked) "physical" else ""
+            val resourceType = ""
+            resourceType = if (rbVirtual.isChecked) "virtual"
+            resourceType = if (rbPhysical.isChecked) "physical"
             val isBase = switchIsBase.isChecked
             val location = etLocation.text.toString().trim()
             val parent = when (spinnerParent.selectedItemPosition) {
@@ -222,21 +246,59 @@ class UpdateActivity : AppCompatActivity() {
             }
 
             // Validation same as TSX
-            if (id.isEmpty()) { Toast.makeText(this, "Resource ID is required", Toast.LENGTH_SHORT).show(); return@setOnClickListener }
-            if (name.isEmpty() || type.isEmpty() || resourceType.isEmpty()) { Toast.makeText(this, "Please fill in all required fields", Toast.LENGTH_SHORT).show(); return@setOnClickListener }
-            if (type == "container" && isBase && location.isEmpty()) { Toast.makeText(this, "Location is required for base containers", Toast.LENGTH_SHORT).show(); return@setOnClickListener }
-            if (type == "container" && !isBase && parent.isEmpty()) { Toast.makeText(this, "Parent container is required for non-base containers", Toast.LENGTH_SHORT).show(); return@setOnClickListener }
+            if (id.isEmpty()) {
+                Toast.makeText(
+                    this,
+                    "Resource ID is required",
+                    Toast.LENGTH_SHORT
+                ).show()
+                return@setOnClickListener
+            }
+            if (name.isEmpty() || type.isEmpty() || resourceType.isEmpty()) {
+                Toast.makeText(
+                    this,
+                    "Please fill in all required fields",
+                    Toast.LENGTH_SHORT
+                ).show()
+                return@setOnClickListener
+            }
+            if (type == "container" && isBase && location.isEmpty()) {
+                Toast.makeText(
+                    this,
+                    "Location is required for base containers",
+                    Toast.LENGTH_SHORT
+                ).show()
+                return@setOnClickListener
+            }
+            if (type == "container" && !isBase && parent.isEmpty()) {
+                Toast.makeText(
+                    this,
+                    "Parent container is required for non-base containers",
+                    Toast.LENGTH_SHORT
+                ).show()
+                return@setOnClickListener
+            }
 
             if (isExistingResource) {
                 // Update the mock resource
                 val idx = existingResources.indexOfFirst { it.id == id }
                 if (idx >= 0) {
-                    existingResources[idx] = Resource(id, name, type, isBase, resourceType, location, parent)
+                    existingResources[idx] = Resource(
+                        id,
+                        name,
+                        type,
+                        isBase,
+                        resourceType,
+                        location,
+                        parent
+                    )
                 }
                 Toast.makeText(this, "Resource updated successfully", Toast.LENGTH_SHORT).show()
                 Log.d("UpdateActivity", "Updated resource: $id, $name")
             } else {
-                existingResources.add(Resource(id, name, type, isBase, resourceType, location, parent))
+                existingResources.add(
+                    Resource(id, name, type, isBase, resourceType, location, parent)
+                )
                 refreshParentSpinner()
                 Toast.makeText(this, "Resource created successfully", Toast.LENGTH_SHORT).show()
                 Log.d("UpdateActivity", "Created resource: $id, $name")
@@ -245,6 +307,11 @@ class UpdateActivity : AppCompatActivity() {
             // Optionally close activity
             // finish()
         }
+    }
 
+    companion object {
+        private const val NO_BARCODE_DELAY = 1400
+        private const val MOCK_BARCODE_RANDOM_INT_LEVEL = 10000
+        private const val MOCK_BARCODE_PADDING = 4
     }
 }
