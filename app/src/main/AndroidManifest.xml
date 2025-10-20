@@ -2,6 +2,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <application
+        android:name=".CrashLoggerApplication"
         android:allowBackup="true"
         android:label="s-a-p"
         android:supportsRtl="true"
@@ -12,6 +13,10 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity android:name=".UpdateActivity" android:exported="true" />
+        <activity android:name=".AuditActivity" android:exported="true" />
+        <activity android:name=".SearchActivity" android:exported="true" />
+        <activity android:name=".PropertiesActivity" android:exported="true" />
     </application>
 
 </manifest>
