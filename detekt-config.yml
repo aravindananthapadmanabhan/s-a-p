@@ -1,0 +1,15 @@
+# Minimal detekt configuration - start with recommended rules and customize later
+processors:
+  active: true
+
+config:
+  validation: true
+
+# Use default rule set and enable formatting rules via buildUponDefaultConfig
+rules:
+  complexity:
+    active: true
+  style:
+    active: true
+  potential-bugs:
+    active: true
