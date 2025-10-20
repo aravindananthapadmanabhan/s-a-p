@@ -48,9 +48,9 @@ class MainActivity : AppCompatActivity() {
             .setPositiveButton("OK", null)
             .show()
     }
-}
 
     companion object {
         private const val PADDING = 16
         private const val TEXT_SIZE = 12f
     }
+}
