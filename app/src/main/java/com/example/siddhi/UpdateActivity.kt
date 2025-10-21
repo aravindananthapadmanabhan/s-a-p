@@ -31,23 +31,23 @@ data class Resource(
     val parentContainer: String
 )
 
-private fun validateAndToast(resource: Resource, context: AppCompatActivity): Boolean {
+private fun validateAndToast(rsrc: Resource, context: AppCompatActivity): Boolean {
     var retVal = true
     // Validation same as TSX
-    if (resource.id.isEmpty()) {
+    if (rsrc.id.isEmpty()) {
         Toast.makeText(context, "Resource ID is required", Toast.LENGTH_SHORT).show()
-        retVal =  false
+        retVal = false
     }
-    if (resource.name.isEmpty() || resource.type.isEmpty() || resource.resourceType.isEmpty()) {
+    if (rsrc.name.isEmpty() || rsrc.type.isEmpty() || rsrc.resourceType.isEmpty()) {
         Toast.makeText(context, "Please fill in all required fields", Toast.LENGTH_SHORT).show()
-        retVal =  false
+        retVal = false
     }
-    if (resource.type == "container" && resource.isBaseContainer && resource.location.isEmpty()) {
-        Toast.makeText(context, "Location is required for base containers", Toast.LENGTH_SHORT).show()
-        retVal =  false
+    if (rsrc.type == "container" && rsrc.isBaseContainer && rsrc.location.isEmpty()) {
+        Toast.makeText(context, "Location required for base", Toast.LENGTH_SHORT).show()
+        retVal = false
     }
-    if (resource.type == "container" && !resource.isBaseContainer && resource.parentContainer.isEmpty()) {
-        Toast.makeText(context, "Parent container is required for non-base containers", Toast.LENGTH_SHORT).show()
+    if (rsrc.type == "container" && !rsrc.isBaseContainer && rsrc.parentContainer.isEmpty()) {
+        Toast.makeText(context, "Parent container required for non-base", Toast.LENGTH_SHORT).show()
         retVal =  false
     }
     
@@ -124,7 +124,7 @@ class UpdateActivity : AppCompatActivity() {
     }
 
     // Setup parent spinner (containers only)
-    fun refreshParentSpinner(context: AppCompatActivity) {
+    private fun refreshParentSpinner(context: AppCompatActivity) {
         // Setup type spinner
         val typeAdapter = ArrayAdapter(context, android.R.layout.simple_spinner_item, types)
         typeAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
@@ -138,6 +138,205 @@ class UpdateActivity : AppCompatActivity() {
         spinnerParent.adapter = adapter
     }
 
+    private fun populateFromResource(r: Resource) {
+        etResourceId.setText(r.id)
+        etName.setText(r.name)
+        spinnerType.setSelection(types.indexOf(r.type).coerceAtLeast(0))
+        switchIsBase.isChecked = r.isBaseContainer
+        if (r.resourceType == "virtual") {
+            rgResourceType.check(R.id.rb_virtual)
+        } else {
+            rgResourceType.check(R.id.rb_physical)
+        }
+        etLocation.setText(r.location)
+        // select parent
+        if (r.parentContainer.isNotEmpty()) {
+            val containers = existingResources.filter { it.type == "container" }
+            val index = containers.indexOfFirst { it.id == r.parentContainer }
+            if (index >= 0) spinnerParent.setSelection(index + 1)
+        }
+        isExistingResource = true
+        tvStatus.visibility = View.VISIBLE
+        tvStatus.text = "Editing existing resource: ${r.id}"
+        btnSubmit.text = "Update Resource"
+    }
+
+    private fun resetForm(resourceIdReset: Boolean = true,setVisibility: Int = View.GONE) {
+        if (resourceIdReset){
+            etResourceId.setText("")
+        }
+        etName.setText("")
+        spinnerType.setSelection(0)
+        switchIsBase.isChecked = false
+        rgResourceType.clearCheck()
+        etLocation.setText("")
+        spinnerParent.setSelection(0)
+        isExistingResource = false
+        tvStatus.visibility = setVisibility
+        btnSubmit.text = "Create Resource"
+    }
+
+    private fun setLocationParentVisibilityUpdate(locationVisibility: Int , parentVisibility: Int) {
+        etLocation.visibility = locationVisibility
+        spinnerParent.visibility = parentVisibility
+    }
+
+
+    private fun handleZXingNotAvailable(e: ActivityNotFoundException) {
+        btnScan.isEnabled = false
+        btnScan.text = "Scanning..."
+        btnScan.postDelayed({
+            Log.e("ScanError", "ZXing not available: ${e.message}")
+            val mockBarcode = "RES" + Random.nextInt(0, MCK_BC_LEVEL).toString().padStart(MCK_BC_PDD, '0')
+            etResourceId.setText(mockBarcode)
+            btnScan.isEnabled = true
+            btnScan.text = "Scan"
+            Toast.makeText(this, "Barcode scanned: $mockBarcode", Toast.LENGTH_SHORT).show()
+            btnLookup.performClick()
+        }, NO_BARCODE_DELAY)
+    }
+
+    private fun setSpinnerOnItemSelectedListener() {
+        spinnerType.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(
+                parent: AdapterView<*>?,
+                view: View?,
+                position: Int,
+                id: Long
+            ) {
+                val selected = types.getOrNull(position) ?: ""
+                llIsBase.visibility = if (selected == "container") View.VISIBLE else View.GONE
+
+                // Show location if container & base
+                val isBase = switchIsBase.isChecked
+                if (selected == "container" && isBase) {
+                    setLocationParentVisibilityUpdate(View.VISIBLE, View.GONE)
+                } else if (selected == "object" || (selected == "container" && !isBase)) {
+                    setLocationParentVisibilityUpdate(View.GONE, View.VISIBLE)
+                } else {
+                    setLocationParentVisibilityUpdate(View.GONE, View.GONE)
+                }
+            }
+
+            override fun onNothingSelected(parent: AdapterView<*>?) {
+                Log.d("SearchActivity", "Nothing is selected")
+            }
+        }   
+    
+    }
+
+    private fun setSubmitButtonOnClickListener() {
+        btnSubmit.setOnClickListener {
+            val id = etResourceId.text.toString().trim()
+            val name = etName.text.toString().trim()
+            val type = types.getOrNull(spinnerType.selectedItemPosition) ?: ""
+            val resourceType = if (rbVirtual.isChecked) "virtual" else if (rbPhysical.isChecked) "physical" else ""
+            val isBase = switchIsBase.isChecked
+            val location = etLocation.text.toString().trim()
+            val parent = when (spinnerParent.selectedItemPosition) {
+                0 -> ""
+                else -> {
+                    val item = spinnerParent.selectedItem as String
+                    item.split(" - ")[0]
+                }
+            }
+
+            
+            if (!validateAndToast(Resource(
+                id,
+                name,
+                type,
+                isBase,
+                resourceType,
+                location,
+                parent),
+                this
+            )) {
+                // The validation function already showed the Toast
+                return@setOnClickListener
+            }
+
+            if (isExistingResource) {
+                // Update the mock resource
+                val idx = existingResources.indexOfFirst { it.id == id }
+                if (idx >= 0) {
+                    existingResources[idx] = Resource(
+                        id,
+                        name,
+                        type,
+                        isBase,
+                        resourceType,
+                        location,
+                        parent
+                    )
+                }
+                Toast.makeText(this, "Resource updated successfully", Toast.LENGTH_SHORT).show()
+                Log.d("UpdateActivity", "Updated resource: $id, $name")
+            } else {
+                existingResources.add(
+                    Resource(id, name, type, isBase, resourceType, location, parent)
+                )
+                refreshParentSpinner(this)
+                Toast.makeText(this, "Resource created successfully", Toast.LENGTH_SHORT).show()
+                Log.d("UpdateActivity", "Created resource: $id, $name")
+            }
+
+            // Optionally close activity
+            // finish()
+        }        
+    }
+
+    private fun setAllListeners() {
+        // Launch real barcode scanner via ZXing
+        btnScan.setOnClickListener {
+            try {
+                barcodeLauncher.launch(defaultScanOptions)
+            } catch (e: ActivityNotFoundException) {
+                // If ZXing not available for some reason, fallback to simulated scan
+                handleZXingNotAvailable(e)
+            }
+        }
+
+        // set form click listeners
+        btnLookup.setOnClickListener {
+            val id = etResourceId.text.toString().trim()
+            if (id.isEmpty()) {
+                Toast.makeText(this, "Rsrc ID is required", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+
+            val found = existingResources.find { it.id == id }
+            if (found != null) {
+                populateFromResource(found)
+                Toast.makeText(this, "Resource found: ${found.name}", Toast.LENGTH_SHORT).show()
+            } else {
+                resetForm(resourceIdReset = false, setVisibility = View.VISIBLE)
+                tvStatus.text = "Creating new resource: $id"
+                Toast.makeText(this,"New Rsrc - please fill details",Toast.LENGTH_SHORT).show()
+            }
+        }
+
+        // Type selection shows/hides isBase and other fields
+        setSpinnerOnItemSelectedListener()
+        
+        // setIsBaseOnCheckedListener
+        switchIsBase.setOnCheckedChangeListener { _, isChecked ->
+            val selected = types.getOrNull(spinnerType.selectedItemPosition) ?: ""
+            if (selected == "container" && isChecked) {
+                setLocationParentVisibilityUpdate(View.VISIBLE, View.GONE)
+            } else if (selected == "container" && !isChecked) {
+                setLocationParentVisibilityUpdate(View.GONE, View.VISIBLE)
+            }
+        }
+
+        btnReset.setOnClickListener { resetForm() }
+
+        setSubmitButtonOnClickListener()
+        
+    }   
+
+
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_update)
@@ -149,204 +348,21 @@ class UpdateActivity : AppCompatActivity() {
         refreshParentSpinner(this)
 
         // hardcoded for now
-        var isExistingResource = false
+        isExistingResource = false
 
-        fun populateFromResource(r: Resource) {
-            etResourceId.setText(r.id)
-            etName.setText(r.name)
-            spinnerType.setSelection(types.indexOf(r.type).coerceAtLeast(0))
-            switchIsBase.isChecked = r.isBaseContainer
-            if (r.resourceType == "virtual") {
-                rgResourceType.check(R.id.rb_virtual)
-            } else {
-                rgResourceType.check(R.id.rb_physical)
-            }
-            etLocation.setText(r.location)
-            // select parent
-            if (r.parentContainer.isNotEmpty()) {
-                val containers = existingResources.filter { it.type == "container" }
-                val index = containers.indexOfFirst { it.id == r.parentContainer }
-                if (index >= 0) spinnerParent.setSelection(index + 1)
-            }
-            isExistingResource = true
-            tvStatus.visibility = View.VISIBLE
-            tvStatus.text = "Editing existing resource: ${r.id}"
-            btnSubmit.text = "Update Resource"
-        }
 
-        fun resetForm(resourceIdReset: Boolean = true,setVisibility: Int = View.GONE) {
-            if (resourceIdReset){
-                etResourceId.setText("")
-            }
-            etName.setText("")
-            spinnerType.setSelection(0)
-            switchIsBase.isChecked = false
-            rgResourceType.clearCheck()
-            etLocation.setText("")
-            spinnerParent.setSelection(0)
-            isExistingResource = false
-            tvStatus.visibility = setVisibility
-            btnSubmit.text = "Create Resource"
-        }
-
-        fun setLocationParentVisibilityUpdate(locationVisibility: Int , parentVisibility: Int) {
-            etLocation.visibility = locationVisibility
-            spinnerParent.visibility = parentVisibility
-        }
-
-        fun setFormOnClickListener() {
-            btnLookup.setOnClickListener {
-                val id = etResourceId.text.toString().trim()
-                if (id.isEmpty()) {
-                    Toast.makeText(this, "Rsrc ID is required", Toast.LENGTH_SHORT).show()
-                    return@setOnClickListener
-                }
-
-                val found = existingResources.find { it.id == id }
-                if (found != null) {
-                    populateFromResource(found)
-                    Toast.makeText(this, "Resource found: ${found.name}", Toast.LENGTH_SHORT).show()
-                } else {
-                    resetForm(resourceIdReset = false, setVisibility = View.VISIBLE)
-                    tvStatus.text = "Creating new resource: $id"
-                    Toast.makeText(this,"New Rsrc - please fill details",Toast.LENGTH_SHORT).show()
-                }
-            }
-        }
-
-        fun handleZXingNotAvailable(e: ActivityNotFoundException) {
-            btnScan.isEnabled = false
-            btnScan.text = "Scanning..."
-            btnScan.postDelayed({
-                Log.e("ScanError", "ZXing not available: ${e.message}")
-                val mockBarcode = "RES" + Random.nextInt(0, MCK_BC_LEVEL).toString().padStart(MCK_BC_PDD, '0')
-                etResourceId.setText(mockBarcode)
-                btnScan.isEnabled = true
-                btnScan.text = "Scan"
-                Toast.makeText(this, "Barcode scanned: $mockBarcode", Toast.LENGTH_SHORT).show()
-                btnLookup.performClick()
-            }, NO_BARCODE_DELAY)
-        }
-
-        fun setSpinnerOnItemSelectedListener() {
-            spinnerType.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
-                override fun onItemSelected(
-                    parent: AdapterView<*>?,
-                    view: View?,
-                    position: Int,
-                    id: Long
-                ) {
-                    val selected = types.getOrNull(position) ?: ""
-                    llIsBase.visibility = if (selected == "container") View.VISIBLE else View.GONE
-
-                    // Show location if container & base
-                    val isBase = switchIsBase.isChecked
-                    if (selected == "container" && isBase) {
-                        setLocationParentVisibilityUpdate(View.VISIBLE, View.GONE)
-                    } else if (selected == "object" || (selected == "container" && !isBase)) {
-                        setLocationParentVisibilityUpdate(View.GONE, View.VISIBLE)
-                    } else {
-                        setLocationParentVisibilityUpdate(View.GONE, View.GONE)
-                    }
-                }
-
-                override fun onNothingSelected(parent: AdapterView<*>?) {
-                    Log.d("SearchActivity", "Nothing is selected")
-                }
-            }   
+        setAllListeners()
         
-        }
 
-        fun setIsBaseOnCheckedListener() {
-            switchIsBase.setOnCheckedChangeListener { _, isChecked ->
-                val selected = types.getOrNull(spinnerType.selectedItemPosition) ?: ""
-                if (selected == "container" && isChecked) {
-                    setLocationParentVisibilityUpdate(View.VISIBLE, View.GONE)
-                } else if (selected == "container" && !isChecked) {
-                    setLocationParentVisibilityUpdate(View.GONE, View.VISIBLE)
-                }
-            }
-        }
 
-        fun setSubmitButtonOnClickListener() {
-            btnSubmit.setOnClickListener {
-                val id = etResourceId.text.toString().trim()
-                val name = etName.text.toString().trim()
-                val type = types.getOrNull(spinnerType.selectedItemPosition) ?: ""
-                val resourceType = if (rbVirtual.isChecked) "virtual" else if (rbPhysical.isChecked) "physical" else ""
-                val isBase = switchIsBase.isChecked
-                val location = etLocation.text.toString().trim()
-                val parent = when (spinnerParent.selectedItemPosition) {
-                    0 -> ""
-                    else -> {
-                        val item = spinnerParent.selectedItem as String
-                        item.split(" - ")[0]
-                    }
-                }
 
-                
-                if (!validateAndToast(Resource(
-                    id,
-                    name,
-                    type,
-                    isBase,
-                    resourceType,
-                    location,
-                    parent),
-                    this
-                )) {
-                    // The validation function already showed the Toast
-                    return@setOnClickListener
-                }
 
-                if (isExistingResource) {
-                    // Update the mock resource
-                    val idx = existingResources.indexOfFirst { it.id == id }
-                    if (idx >= 0) {
-                        existingResources[idx] = Resource(
-                            id,
-                            name,
-                            type,
-                            isBase,
-                            resourceType,
-                            location,
-                            parent
-                        )
-                    }
-                    Toast.makeText(this, "Resource updated successfully", Toast.LENGTH_SHORT).show()
-                    Log.d("UpdateActivity", "Updated resource: $id, $name")
-                } else {
-                    existingResources.add(
-                        Resource(id, name, type, isBase, resourceType, location, parent)
-                    )
-                    refreshParentSpinner(this)
-                    Toast.makeText(this, "Resource created successfully", Toast.LENGTH_SHORT).show()
-                    Log.d("UpdateActivity", "Created resource: $id, $name")
-                }
 
-                // Optionally close activity
-                // finish()
-            }        
-        }
 
-        // Launch real barcode scanner via ZXing
-        btnScan.setOnClickListener {
-            try {
-                barcodeLauncher.launch(defaultScanOptions)
-            } catch (e: ActivityNotFoundException) {
-                // If ZXing not available for some reason, fallback to simulated scan
-                handleZXingNotAvailable(e)
-            }
-        }
 
-        // Type selection shows/hides isBase and other fields
-        setSpinnerOnItemSelectedListener()
 
-        setIsBaseOnCheckedListener()
 
-        btnReset.setOnClickListener { resetForm() }
-
-        setSubmitButtonOnClickListener()
+        
 
 
     }
