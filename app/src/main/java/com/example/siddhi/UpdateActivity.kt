@@ -48,13 +48,10 @@ private fun validateAndToast(rsrc: Resource, context: AppCompatActivity): Boolea
     }
     if (rsrc.type == "container" && !rsrc.isBaseContainer && rsrc.parentContainer.isEmpty()) {
         Toast.makeText(context, "Parent container required for non-base", Toast.LENGTH_SHORT).show()
-        retVal =  false
+        retVal = false
     }
-    
     return retVal
 }
-
-
 
 class UpdateActivity : AppCompatActivity() {
     // Mock existing resources (in real app, fetch from DB or API)
@@ -79,11 +76,8 @@ class UpdateActivity : AppCompatActivity() {
     private lateinit var spinnerParent: Spinner
     private lateinit var rbVirtual: RadioButton
     private lateinit var rbPhysical: RadioButton
-
     private val types = listOf("", "object", "container")
     private var isExistingResource = false
-
-
     private val defaultScanOptions = ScanOptions().apply {
         setPrompt("Scan a barcode")
         setBeepEnabled(true)
@@ -92,7 +86,7 @@ class UpdateActivity : AppCompatActivity() {
     }
 
     private val barcodeLauncher: ActivityResultLauncher<ScanOptions> = registerForActivityResult(
-        ScanContract() // This is part of the IntentIntegrator library (e.g., zxing-android-embedded)
+        ScanContract() // This is part of the IntentIntegrator library
     ) { result ->
         if (result.contents != null) {
             val scanned = result.contents
@@ -120,7 +114,7 @@ class UpdateActivity : AppCompatActivity() {
         spinnerParent = findViewById(R.id.spinner_parent)
         btnReset = findViewById(R.id.btn_reset)
         btnSubmit = findViewById(R.id.btn_submit)
-        tvStatus  = findViewById(R.id.tv_status)
+        tvStatus = findViewById(R.id.tv_status)
     }
 
     // Setup parent spinner (containers only)
@@ -161,8 +155,8 @@ class UpdateActivity : AppCompatActivity() {
         btnSubmit.text = "Update Resource"
     }
 
-    private fun resetForm(resourceIdReset: Boolean = true,setVisibility: Int = View.GONE) {
-        if (resourceIdReset){
+    private fun resetForm(resourceIdReset: Boolean = true, setVisibility: Int = View.GONE) {
+        if (resourceIdReset) {
             etResourceId.setText("")
         }
         etName.setText("")
@@ -176,19 +170,18 @@ class UpdateActivity : AppCompatActivity() {
         btnSubmit.text = "Create Resource"
     }
 
-    private fun setLocationParentVisibilityUpdate(locationVisibility: Int , parentVisibility: Int) {
+    private fun setLocationParentVisibilityUpdate(locationVisibility: Int, parentVisibility: Int) {
         etLocation.visibility = locationVisibility
         spinnerParent.visibility = parentVisibility
     }
-
 
     private fun handleZXingNotAvailable(e: ActivityNotFoundException) {
         btnScan.isEnabled = false
         btnScan.text = "Scanning..."
         btnScan.postDelayed({
             Log.e("ScanError", "ZXing not available: ${e.message}")
-            val mockBarcode = "RES" + Random.nextInt(0, MCK_BC_LEVEL).toString().padStart(MCK_BC_PDD, '0')
-            etResourceId.setText(mockBarcode)
+            val mockBarcode = Random.nextInt(0, MCK_BC_LVL).toString().padStart(MCK_BC_PDD, '0')
+            etResourceId.setText("RES" + mockBarcode)
             btnScan.isEnabled = true
             btnScan.text = "Scan"
             Toast.makeText(this, "Barcode scanned: $mockBarcode", Toast.LENGTH_SHORT).show()
@@ -221,8 +214,7 @@ class UpdateActivity : AppCompatActivity() {
             override fun onNothingSelected(parent: AdapterView<*>?) {
                 Log.d("SearchActivity", "Nothing is selected")
             }
-        }   
-    
+        }
     }
 
     private fun setSubmitButtonOnClickListener() {
@@ -230,7 +222,12 @@ class UpdateActivity : AppCompatActivity() {
             val id = etResourceId.text.toString().trim()
             val name = etName.text.toString().trim()
             val type = types.getOrNull(spinnerType.selectedItemPosition) ?: ""
-            val resourceType = if (rbVirtual.isChecked) "virtual" else if (rbPhysical.isChecked) "physical" else ""
+            var resourceType = ""
+            if (rbVirtual.isChecked) {
+                resourceType = "virtual"
+            } else if (rbPhysical.isChecked) {
+                resourceType = "physical"
+            }
             val isBase = switchIsBase.isChecked
             val location = etLocation.text.toString().trim()
             val parent = when (spinnerParent.selectedItemPosition) {
@@ -240,18 +237,8 @@ class UpdateActivity : AppCompatActivity() {
                     item.split(" - ")[0]
                 }
             }
-
-            
-            if (!validateAndToast(Resource(
-                id,
-                name,
-                type,
-                isBase,
-                resourceType,
-                location,
-                parent),
-                this
-            )) {
+            val rsrc = Resource(id, name, type, isBase, resourceType, location, parent)
+            if (!validateAndToast(rsrc, this)) {
                 // The validation function already showed the Toast
                 return@setOnClickListener
             }
@@ -280,10 +267,7 @@ class UpdateActivity : AppCompatActivity() {
                 Toast.makeText(this, "Resource created successfully", Toast.LENGTH_SHORT).show()
                 Log.d("UpdateActivity", "Created resource: $id, $name")
             }
-
-            // Optionally close activity
-            // finish()
-        }        
+        }
     }
 
     private fun setAllListeners() {
@@ -312,13 +296,13 @@ class UpdateActivity : AppCompatActivity() {
             } else {
                 resetForm(resourceIdReset = false, setVisibility = View.VISIBLE)
                 tvStatus.text = "Creating new resource: $id"
-                Toast.makeText(this,"New Rsrc - please fill details",Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "New Rsrc - please fill details", Toast.LENGTH_SHORT).show()
             }
         }
 
         // Type selection shows/hides isBase and other fields
         setSpinnerOnItemSelectedListener()
-        
+
         // setIsBaseOnCheckedListener
         switchIsBase.setOnCheckedChangeListener { _, isChecked ->
             val selected = types.getOrNull(spinnerType.selectedItemPosition) ?: ""
@@ -330,12 +314,8 @@ class UpdateActivity : AppCompatActivity() {
         }
 
         btnReset.setOnClickListener { resetForm() }
-
         setSubmitButtonOnClickListener()
-        
-    }   
-
-
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -350,26 +330,13 @@ class UpdateActivity : AppCompatActivity() {
         // hardcoded for now
         isExistingResource = false
 
-
+        // set listeners
         setAllListeners()
-        
-
-
-
-
-
-
-
-
-
-        
-
-
     }
 
     companion object {
         private const val NO_BARCODE_DELAY = 1400L
-        private const val MCK_BC_LEVEL = 10000
+        private const val MCK_BC_LVL = 1000
         private const val MCK_BC_PDD = 4
     }
 }
